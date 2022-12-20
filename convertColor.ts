@@ -1,4 +1,4 @@
-import { red } from "std/fmt/colors.ts";
+import { red } from "https://deno.land/std@0.170.0/fmt/colors.ts";
 import chroma from "https://esm.sh/chroma-js@2.4.2";
 
 const colorMap: Record<string, string> = {
