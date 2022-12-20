@@ -1,0 +1,9 @@
+{
+  "version": "2",
+  "remote": {
+    "https://deno.land/std@0.170.0/fmt/colors.ts": "03ad95e543d2808bc43c17a3dd29d25b43d0f16287fe562a0be89bf632454a12",
+    "https://esm.sh/chroma-js@2.4.2": "3eec9529f3e6327fe96f882cc5826598f6ac8337ad24cae399972f8081ac87bf",
+    "https://esm.sh/v95/@types/chroma-js@2.1.4/index.d.ts": "fae40de985385b22f775c1bea02959b251abddaa1cb168ee6c4f00d79ccfd8ef",
+    "https://esm.sh/v95/chroma-js@2.4.2/deno/chroma-js.js": "de594b57026bd816ba8fae64ff1fef47b43a647d5065100c9e0ca687b158b706"
+  }
+}
