@@ -1,5 +1,4 @@
 import { join } from "https://deno.land/std@0.170.0/path/mod.ts";
-import { grantOrThrow } from "https://deno.land/std@0.170.0/permissions/mod.ts";
 import {
   Input,
   Select,
