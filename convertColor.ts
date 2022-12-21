@@ -1,5 +1,5 @@
 import { red } from "https://deno.land/std@0.170.0/fmt/colors.ts";
-import { Input } from "https://deno.land/x/cliffy@v0.25.5/prompt/mod.ts";
+import { Input } from "https://deno.land/x/cliffy@v0.25.6/prompt/mod.ts";
 import { convertColor } from "./src/convertColor.ts";
 
 // REPL

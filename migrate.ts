@@ -2,70 +2,70 @@ import { join } from "https://deno.land/std@0.170.0/path/mod.ts";
 import { grantOrThrow } from "https://deno.land/std@0.170.0/permissions/mod.ts";
 import {
   Input,
-  Confirm,
   Select,
   SelectValueOptions,
-} from "https://deno.land/x/cliffy@v0.25.5/prompt/mod.ts";
-import { keypress } from "https://deno.land/x/cliffy@v0.25.5/keypress/mod.ts";
-import { red } from "https://deno.land/std@0.170.0/fmt/colors.ts";
+} from "https://deno.land/x/cliffy@v0.25.6/prompt/mod.ts";
+import { keypress } from "https://deno.land/x/cliffy@v0.25.6/keypress/mod.ts";
+import { bold, red, yellow } from "https://deno.land/std@0.170.0/fmt/colors.ts";
+import { LegacyConfig } from "./src/LegacyConfig.d.ts";
+import { ArtemisWaypoint } from "./src/ArtemisConfig.d.ts";
 
 const { log } = console;
 
-async function enterToExit() {
+async function enterToExit(): Promise<never> {
   log("Press [Enter] to exit");
   for await (const event of keypress()) {
     if (event.key == "return") {
-      return;
+      break;
     }
   }
+  Deno.exit();
 }
 
-let mcfolder = await Input.prompt({
-  message: "Where is your .minecraft folder?",
-  // default: "%AppData%\\.minecraft",
-  default:
-    "C:\\Users\\ethan\\AppData\\Roaming\\PrismLauncher\\instances\\Wynncraft\\.minecraft",
+let uuids: string[] = [];
+
+let legacyPath = await Input.prompt({
+  message: "Where is your legacy instance?",
+  default: Deno.args[0],
+  id: "legacyPath",
+  hint: "This should be a .minecraft folder containing Wynntils for 1.12.2",
+
+  validate: (legacyPath) => {
+    legacyPath = join(legacyPath, "wynntils", "configs");
+
+    try {
+      uuids = [...Deno.readDirSync(legacyPath)]
+        .filter((v) => v.isDirectory)
+        .map((v) => v.name);
+      if (uuids.length == 0)
+        return "Failed to find any legacy Wynntils configs in this folder.";
+      return true;
+    } catch (e) {
+      if (e instanceof Deno.errors.NotFound)
+        return "Failed to find Wynntils legacy configs in this .minecraft folder";
+      else if (e instanceof Deno.errors.PermissionDenied)
+        return "Permission denied to read from this folder.\n   If this was a mistake, you will need to restart the program.";
+      else throw e;
+    }
+  },
 });
+legacyPath = join(legacyPath, "wynntils", "configs");
 
-if (mcfolder == "%AppData%\\.minecraft") {
-  // grantOrThrow({ name: "env", name: "AppData" });
-  const appdata = Deno.env.get("AppData");
-  if (!appdata) {
-    log(red("Failed to get %AppData%. Please manually specify path."));
-    await enterToExit();
-    Deno.exit();
-  }
-  mcfolder = join(appdata, ".minecraft");
-}
-
-const legacyWTConfigs = join(mcfolder, "wynntils", "configs");
-// grantOrThrow({ name: "read", path: legacyWTConfigs });
-
-let uuids;
-try {
-  uuids = [...Deno.readDirSync(legacyWTConfigs)]
-    .filter((v) => v.isDirectory)
-    .map((v) => v.name);
-} catch (e) {
-  if (e instanceof Deno.errors.NotFound) {
-    log("Failed to find Wynntils configs in this .minecraft folder");
-    await enterToExit();
-    Deno.exit();
-  } else throw e;
-}
+log();
 
 const uuidMap: Record<string, string> = {};
 
-if (
-  uuids.length > 0 &&
-  (
-    await Deno.permissions.query({
-      name: "net",
-      host: "sessionserver.mojang.com",
-    })
-  ).state == "prompt"
-) {
-  console.log("Requesting permission to check Minecraft usernames...");
+const mojangRequest: Deno.NetPermissionDescriptor = {
+  name: "net",
+  host: "sessionserver.mojang.com",
+};
+
+if ((await Deno.permissions.query(mojangRequest)).state == "prompt") {
+  log(bold("Requesting permission"), "to check Minecraft usernames...");
+  if ((await Deno.permissions.request(mojangRequest)).state == "denied") {
+    log(yellow("Permission denied."), "Will show UUIDs instead.");
+  }
+  log();
 }
 
 for (const uuid of uuids) {
@@ -79,22 +79,10 @@ for (const uuid of uuids) {
 }
 
 function getNameFromUUID(uuid: string): string {
-  return uuidMap[uuid] || `${uuid} (Failed to get UUID)`;
+  return uuidMap[uuid] || `${uuid} (Failed to get username)`;
 }
 
-let uuid: string;
-
-if (uuids.length == 0) {
-  log("Failed to find any Wynntils configs.");
-} else if (uuids.length == 1) {
-  uuid = uuids[0];
-  log("Only one Wynntils config was found.");
-  if (!(await Confirm.prompt(`Is your username ${getNameFromUUID(uuid)}?`))) {
-    log("No other configs were found.");
-    await enterToExit();
-    Deno.exit();
-  }
-} else {
+const uuid: string = await (async () => {
   const options: SelectValueOptions = [];
   for (const uuid of uuids)
     options.push({
@@ -102,10 +90,36 @@ if (uuids.length == 0) {
       value: uuid,
     });
 
-  uuid = await Select.prompt({
+  return await Select.prompt({
     message: "Select your Minecraft username",
     options,
   });
+})();
+
+legacyPath = join(legacyPath, uuid, "map-waypoints.config");
+
+let legacyData: LegacyConfig;
+try {
+  const fileData = await Deno.readTextFile(legacyPath);
+  legacyData = JSON.parse(fileData);
+} catch (e) {
+  if (e instanceof SyntaxError) {
+    log(red("Failed to read legacy waypoint data"));
+    log(
+      `Please report the error below and include wynntils/config/${uuid}/map-waypoints.config`
+    );
+  } else if (e instanceof Deno.errors.NotFound) {
+    log(red("Failed to find legacy waypoint data"));
+  } else throw e;
+
+  log(e);
+  await enterToExit();
+  // https://github.com/microsoft/TypeScript/issues/34955
+  Deno.exit();
+}
+
+const artemisWaypoints: ArtemisWaypoint[] = [];
+for (const waypoint of legacyData.waypoints) {
 }
 
 log("Migrator isn't complete. Please wait for an update. :)");

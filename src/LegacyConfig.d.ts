@@ -18,27 +18,13 @@ export type LegacyWaypoint = {
   x: number;
   y: number;
   z: number;
-  zoomNeeded: boolean;
-  color: string; //"WHITE"
-  type: LegacyWaypointIcon; //"FLAG"
-  group: LegacyWaypointIcon; //"FLAG"
+  zoomNeeded: number; // 0 default -1000 always -1 hidden
+  color: string;
+  type: LegacyWaypointIcon;
+  group: LegacyWaypointIcon;
   showBeaconBeam: boolean;
-};
-
-export type LegacyPathWaypoint = {
-  name: string;
-  isCircular: boolean;
-  isEnabled: boolean;
-  color: string; // RED
-  points: number[];
 };
 
 export type LegacyConfig = {
   waypoints: LegacyWaypoint[];
-  pathWaypoints: LegacyPathWaypoint[];
-  // iconFade: boolean;
-  // iconFadeScale: number;
-  // chestTiers: string; //"TIER_1"
-  // compassMarker: boolean;
-  // waypointSpacing: string; //"MEDIUM"
 };
