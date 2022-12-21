@@ -33,7 +33,6 @@ let uuids: string[] = [];
 let legacyPath = await Input.prompt({
   message: "Where is your legacy instance?",
   default: Deno.args[0],
-  id: "legacyPath",
   hint: "This should be a .minecraft folder containing Wynntils for 1.12.2",
 
   validate: (legacyPath) => {
