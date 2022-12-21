@@ -6,9 +6,15 @@ import {
   SelectValueOptions,
 } from "https://deno.land/x/cliffy@v0.25.6/prompt/mod.ts";
 import { keypress } from "https://deno.land/x/cliffy@v0.25.6/keypress/mod.ts";
-import { bold, red, yellow } from "https://deno.land/std@0.170.0/fmt/colors.ts";
+import {
+  bold,
+  red,
+  yellow,
+  green,
+} from "https://deno.land/std@0.170.0/fmt/colors.ts";
 import { LegacyConfig } from "./src/LegacyConfig.d.ts";
 import { ArtemisWaypoint } from "./src/ArtemisConfig.d.ts";
+import { convertColor } from "./src/convertColor.ts";
 
 const { log } = console;
 
@@ -64,19 +70,24 @@ if ((await Deno.permissions.query(mojangRequest)).state == "prompt") {
   log(bold("Requesting permission"), "to check Minecraft usernames...");
   if ((await Deno.permissions.request(mojangRequest)).state == "denied") {
     log(yellow("Permission denied."), "Will show UUIDs instead.");
+    log();
   }
-  log();
 }
 
-for (const uuid of uuids) {
-  try {
-    const profile: Response = await fetch(
-      `https://sessionserver.mojang.com/session/minecraft/profile/${uuid}`
-    );
-    const name = (await profile.json()).name;
-    uuidMap[uuid] = name;
-  } catch {}
-}
+if ((await Deno.permissions.query(mojangRequest)).state == "granted") {
+  log("Checking Minecraft usernames...");
+  for (const uuid of uuids) {
+    try {
+      const profile: Response = await fetch(
+        `https://sessionserver.mojang.com/session/minecraft/profile/${uuid}`
+      );
+      const name = (await profile.json()).name;
+      uuidMap[uuid] = name;
+      // deno-lint-ignore no-empty
+    } catch {}
+  }
+  log();
+} else for (const uuid of uuids) uuidMap[uuid] = uuid;
 
 function getNameFromUUID(uuid: string): string {
   return uuidMap[uuid] || `${uuid} (Failed to get username)`;
@@ -91,10 +102,11 @@ const uuid: string = await (async () => {
     });
 
   return await Select.prompt({
-    message: "Select your Minecraft username",
+    message: "Select your Minecraft account",
     options,
   });
 })();
+log();
 
 legacyPath = join(legacyPath, uuid, "map-waypoints.config");
 
@@ -114,13 +126,58 @@ try {
 
   log(e);
   await enterToExit();
-  // https://github.com/microsoft/TypeScript/issues/34955
-  Deno.exit();
+  Deno.exit(); // https://github.com/microsoft/TypeScript/issues/34955
 }
 
 const artemisWaypoints: ArtemisWaypoint[] = [];
 for (const waypoint of legacyData.waypoints) {
+  const { name, type, zoomNeeded, x, y, z } = waypoint;
+
+  const chest = name.match(/^Loot Chest T([0-4])$/);
+
+  artemisWaypoints.push({
+    name: chest ? `Loot Chest ${chest[1]}` : name,
+    color: convertColor(waypoint.color),
+    icon:
+      type == "LOOTCHEST_T1"
+        ? "CHEST_T1"
+        : type == "LOOTCHEST_T2"
+        ? "CHEST_T1"
+        : type == "LOOTCHEST_T3"
+        ? "CHEST_T1"
+        : type == "LOOTCHEST_T4"
+        ? "CHEST_T1"
+        : type == "TURRET"
+        ? "WALL"
+        : type,
+    visibility:
+      zoomNeeded > -1 ? "DEFAULT" : zoomNeeded < -1 ? "ALWAYS" : "DEFAULT",
+    location: { x, y, z },
+  });
 }
 
-log("Migrator isn't complete. Please wait for an update. :)");
-await enterToExit();
+log(green("Your waypoints have been converted!"));
+const method = await Select.prompt({
+  message: "How would your like your converted waypoints?",
+  options: [
+    {
+      name: "Printed to console",
+      value: "console",
+    },
+    {
+      name: "Automatically saved to my Artemis instance (Not yet implemented)",
+      value: "auto",
+      disabled: true,
+    },
+  ],
+});
+log();
+
+if (method == "console") {
+  log(
+    `Replace mapFeature.customPois in wynntils/config/${uuid}.conf.json with this:`
+  );
+  log(JSON.stringify(artemisWaypoints));
+} else if (method == "auto") {
+  // Not yet implemented
+}
