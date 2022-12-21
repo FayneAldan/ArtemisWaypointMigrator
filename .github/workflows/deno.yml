@@ -39,3 +39,28 @@ jobs:
 
       - name: Run tests
         run: deno test -A
+  compile:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup repo
+        uses: actions/checkout@v3
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: v1.x
+
+      - name: Compile for Windows
+        run: deno compile --target x86_64-pc-windows-msvc -o out/migrate-win migrate.ts
+      - name: Compile for Mac Intel
+        run: deno compile --target x86_64-apple-darwin -o out/migrate-mac-intel migrate.ts
+      - name: Compile for Mac Silicon
+        run: deno compile --target aarch64-apple-darwin -o out/migrate-mac-arm migrate.ts
+      - name: Compile for Linux
+        run: deno compile --target x86_64-unknown-linux-gnu -o out/migrate-linux migrate.ts
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          path: out/
