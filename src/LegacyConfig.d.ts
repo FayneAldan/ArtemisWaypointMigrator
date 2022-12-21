@@ -25,6 +25,15 @@ export type LegacyWaypoint = {
   showBeaconBeam: boolean;
 };
 
+export type LegacyPathWaypoint = {
+  name: string;
+  isCircular: boolean;
+  isEnabled: boolean;
+  color: string;
+  points: number[];
+};
+
 export type LegacyConfig = {
   waypoints: LegacyWaypoint[];
+  pathWaypoints: LegacyPathWaypoint[];
 };
