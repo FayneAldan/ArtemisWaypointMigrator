@@ -7,7 +7,7 @@ while (true) {
   const input = await Input.prompt("Legacy color");
   try {
     const output = convertColor(input);
-    console.log(output.hex());
+    console.log(output);
   } catch (e) {
     console.log(red(String(e)));
   }

@@ -36,16 +36,16 @@ const colorMap: Record<string, string> = {
   white: "#FFFFFF",
 };
 
-export function convertColor(input: string): chroma.Color {
+export function convertColor(input: string): string {
   if (colorMap[input.toLowerCase()])
-    return chroma(colorMap[input.toLowerCase()]);
+    return chroma(colorMap[input.toLowerCase()]).hex();
   if (input.startsWith("rgba(")) {
     const rgba = <[number, number, number, number]>input
       .substring(5, input.length - 1)
       .split(",")
       .map(Number);
-    return chroma.gl(...rgba);
+    return chroma.gl(...rgba).hex();
   }
-  if (chroma.valid(input)) return chroma(input);
+  if (chroma.valid(input)) return chroma(input).hex();
   throw new Error("Unrecognized format");
 }

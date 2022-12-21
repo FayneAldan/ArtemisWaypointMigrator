@@ -4,13 +4,13 @@ import { LegacyConfig } from "../src/LegacyConfig.d.ts";
 const input = <LegacyConfig>(
   JSON.parse(await Deno.readTextFile("test/map-waypoints1.config"))
 );
-const { waypoints, pathWaypoints } = input;
+const { waypoints } = input;
 const colors = [
   ...waypoints.map((v) => v.color),
-  ...pathWaypoints.map((v) => v.color),
+  // ...pathWaypoints.map((v) => v.color),
 ].map((v) => {
   try {
-    return convertColor(v).hex();
+    return convertColor(v);
   } catch (e) {
     return v + " / " + e;
   }
