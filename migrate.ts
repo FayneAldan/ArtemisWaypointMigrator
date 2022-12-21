@@ -173,9 +173,15 @@ log();
 
 if (method == "console") {
   log(
-    `Replace mapFeature.customPois in wynntils/config/${uuid}.conf.json with this:`
+    bold(
+      `Replace mapFeature.customPois in wynntils/config/${uuid}.conf.json with this:`
+    )
   );
+  log();
   log(JSON.stringify(artemisWaypoints));
+  log();
+  log("(you may need to scroll up)");
+  await enterToExit();
 } else if (method == "auto") {
   // Not yet implemented
 }
