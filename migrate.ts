@@ -1,16 +1,13 @@
 import { join } from "https://deno.land/std@0.170.0/path/mod.ts";
+
 import {
   Input,
   Select,
   SelectValueOptions,
 } from "https://deno.land/x/cliffy@v0.25.6/prompt/mod.ts";
 import { keypress } from "https://deno.land/x/cliffy@v0.25.6/keypress/mod.ts";
-import {
-  bold,
-  red,
-  yellow,
-  green,
-} from "https://deno.land/std@0.170.0/fmt/colors.ts";
+import { colors, tty } from "https://deno.land/x/cliffy@v0.25.6/ansi/mod.ts";
+
 import { LegacyConfig } from "./src/LegacyConfig.d.ts";
 import { ArtemisWaypoint } from "./src/ArtemisConfig.d.ts";
 import { convertColor } from "./src/convertColor.ts";
@@ -35,6 +32,9 @@ let legacyPath = await Input.prompt({
   hint: "This should be a .minecraft folder containing Wynntils for 1.12.2",
 
   validate: (legacyPath) => {
+    log();
+    tty.cursorUp(1);
+
     legacyPath = join(legacyPath, "wynntils", "configs");
 
     try {
@@ -65,9 +65,9 @@ const mojangRequest: Deno.NetPermissionDescriptor = {
 };
 
 if ((await Deno.permissions.query(mojangRequest)).state == "prompt") {
-  log(bold("Requesting permission"), "to check Minecraft usernames...");
+  log(colors.bold("Requesting permission"), "to check Minecraft usernames...");
   if ((await Deno.permissions.request(mojangRequest)).state == "denied") {
-    log(yellow("Permission denied."), "Will show UUIDs instead.");
+    log(colors.yellow("Permission denied."), "Will show UUIDs instead.");
     log();
   }
 }
@@ -114,12 +114,12 @@ try {
   legacyData = JSON.parse(fileData);
 } catch (e) {
   if (e instanceof SyntaxError) {
-    log(red("Failed to read legacy waypoint data"));
+    log(colors.red("Failed to read legacy waypoint data"));
     log(
       `Please report the error below and include wynntils/config/${uuid}/map-waypoints.config`
     );
   } else if (e instanceof Deno.errors.NotFound) {
-    log(red("Failed to find legacy waypoint data"));
+    log(colors.red("Failed to find legacy waypoint data"));
   } else throw e;
 
   log(e);
@@ -154,7 +154,7 @@ for (const waypoint of legacyData.waypoints) {
   });
 }
 
-log(green("Your waypoints have been converted!"));
+log(colors.green("Your waypoints have been converted!"));
 const method = await Select.prompt({
   message: "How would your like your converted waypoints?",
   options: [
@@ -173,7 +173,7 @@ log();
 
 if (method == "console") {
   log(
-    bold(
+    colors.bold(
       `Replace mapFeature.customPois in wynntils/config/${uuid}.conf.json with this:`
     )
   );
