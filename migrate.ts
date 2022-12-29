@@ -6,12 +6,13 @@ import {
   SelectValueOptions,
 } from "https://deno.land/x/cliffy@v0.25.6/prompt/mod.ts";
 import { keypress } from "https://deno.land/x/cliffy@v0.25.6/keypress/mod.ts";
-import { colors, tty } from "https://deno.land/x/cliffy@v0.25.6/ansi/mod.ts";
+import { colors } from "https://deno.land/x/cliffy@v0.25.6/ansi/mod.ts";
 
 import { LegacyConfig } from "./src/LegacyConfig.d.ts";
 import { ArtemisWaypoint } from "./src/ArtemisConfig.d.ts";
 import { convertColor } from "./src/convertColor.ts";
 
+const { red, yellow, green, bold } = colors;
 const { log } = console;
 
 async function enterToExit(): Promise<never> {
@@ -24,62 +25,63 @@ async function enterToExit(): Promise<never> {
   Deno.exit();
 }
 
-let uuids: string[] = [];
-
 let legacyPath = await Input.prompt({
   message: "Where is your legacy instance?",
   default: Deno.args[0],
   hint: "This should be a .minecraft folder containing Wynntils for 1.12.2",
-
-  validate: (legacyPath) => {
-    log();
-    tty.cursorUp(1);
-
-    legacyPath = join(legacyPath, "wynntils", "configs");
-
-    try {
-      uuids = [...Deno.readDirSync(legacyPath)]
-        .filter((v) => v.isDirectory)
-        .map((v) => v.name);
-      if (uuids.length == 0)
-        return "Failed to find any legacy Wynntils configs in this folder.";
-      return true;
-    } catch (e) {
-      if (e instanceof Deno.errors.NotFound)
-        return "Failed to find Wynntils legacy configs in this .minecraft folder";
-      else if (e instanceof Deno.errors.PermissionDenied)
-        return "Permission denied to read from this folder.\n   If this was a mistake, you will need to restart the program.";
-      else throw e;
-    }
-  },
 });
 legacyPath = join(legacyPath, "wynntils", "configs");
 
+let uuids: string[] = [];
+
+try {
+  uuids = [...Deno.readDirSync(legacyPath)]
+    .filter((v) => v.isDirectory)
+    .map((v) => v.name);
+} catch (e) {
+  if (e instanceof Deno.errors.NotFound)
+    log(red("Failed to find Wynntils legacy configs in the specified folder"));
+  else if (e instanceof Deno.errors.PermissionDenied)
+    log(red("Permission denied to read from this folder."));
+  else throw e;
+  await enterToExit();
+}
+
 log();
+
+if (uuids.length == 0) {
+  log(red("Failed to find any legacy Wynntils configs in this folder."));
+  await enterToExit();
+}
 
 const uuidMap: Record<string, string> = {};
 
-const mojangRequest: Deno.NetPermissionDescriptor = {
+const playerdbPerm: Deno.NetPermissionDescriptor = {
   name: "net",
-  host: "sessionserver.mojang.com",
+  host: "playerdb.co",
 };
 
-if ((await Deno.permissions.query(mojangRequest)).state == "prompt") {
-  log(colors.bold("Requesting permission"), "to check Minecraft usernames...");
-  if ((await Deno.permissions.request(mojangRequest)).state == "denied") {
-    log(colors.yellow("Permission denied."), "Will show UUIDs instead.");
+if ((await Deno.permissions.query(playerdbPerm)).state == "prompt") {
+  log(bold("Requesting permission"), "to check Minecraft usernames...");
+  if ((await Deno.permissions.request(playerdbPerm)).state == "denied") {
+    log(yellow("Permission denied."), "Will show UUIDs instead.");
     log();
   }
 }
 
-if ((await Deno.permissions.query(mojangRequest)).state == "granted") {
+if ((await Deno.permissions.query(playerdbPerm)).state == "granted") {
   log("Checking Minecraft usernames...");
   for (const uuid of uuids) {
     try {
       const profile: Response = await fetch(
-        `https://playerdb.co/api/player/minecraft/${uuid}`
+        `https://playerdb.co/api/player/minecraft/${uuid}`,
+        {
+          headers: {
+            "user-agent": "faynealdan.github.io/ArtemisWaypointMigrator/",
+          },
+        }
       );
-      const name = (await profile.json()).name;
+      const name = (await profile.json()).data.player.username;
       uuidMap[uuid] = name;
       // deno-lint-ignore no-empty
     } catch {}
@@ -114,12 +116,12 @@ try {
   legacyData = JSON.parse(fileData);
 } catch (e) {
   if (e instanceof SyntaxError) {
-    log(colors.red("Failed to read legacy waypoint data"));
+    log(red("Failed to read legacy waypoint data"));
     log(
       `Please report the error below and include wynntils/config/${uuid}/map-waypoints.config`
     );
   } else if (e instanceof Deno.errors.NotFound) {
-    log(colors.red("Failed to find legacy waypoint data"));
+    log(red("Failed to find legacy waypoint data"));
   } else throw e;
 
   log(e);
@@ -154,7 +156,7 @@ for (const waypoint of legacyData.waypoints) {
   });
 }
 
-log(colors.green("Your waypoints have been converted!"));
+log(green("Your waypoints have been converted!"));
 const method = await Select.prompt({
   message: "How would your like your converted waypoints?",
   options: [
@@ -173,7 +175,7 @@ log();
 
 if (method == "console") {
   log(
-    colors.bold(
+    bold(
       `Replace mapFeature.customPois in wynntils/config/${uuid}.conf.json with this:`
     )
   );
