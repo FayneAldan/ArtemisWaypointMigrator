@@ -1,27 +1,41 @@
 import { join } from "https://deno.land/std@0.170.0/path/mod.ts";
 
 import {
+  Confirm,
   Input,
   Select,
   SelectValueOptions,
 } from "https://deno.land/x/cliffy@v0.25.6/prompt/mod.ts";
 import { keypress } from "https://deno.land/x/cliffy@v0.25.6/keypress/mod.ts";
-import { colors } from "https://deno.land/x/cliffy@v0.25.6/ansi/mod.ts";
+import { colors, tty } from "https://deno.land/x/cliffy@v0.25.6/ansi/mod.ts";
 
 import { LegacyConfig } from "./src/LegacyConfig.d.ts";
-import { ArtemisWaypoint } from "./src/ArtemisConfig.d.ts";
+import { ArtemisConfig, ArtemisWaypoint } from "./src/ArtemisConfig.d.ts";
 import { convertColor } from "./src/convertColor.ts";
 
-const { red, yellow, green, bold } = colors;
+const { red, yellow, green, bold, strikethrough } = colors;
 const { log } = console;
 
-async function enterToExit(): Promise<never> {
-  log("Press [Enter] to exit");
+async function waitForEnter(): Promise<void> {
   for await (const event of keypress()) {
+    if (event.ctrlKey && event.key == "c") {
+      Deno.exit();
+    }
     if (event.key == "return") {
       break;
     }
   }
+}
+
+async function enterToCont(): Promise<void> {
+  log("Press [Enter] to continue or close the program to cancel");
+  await waitForEnter();
+  tty.cursorUp.eraseDown();
+}
+
+async function enterToExit(): Promise<never> {
+  log("Press [Enter] to exit");
+  await waitForEnter();
   Deno.exit();
 }
 
@@ -84,7 +98,7 @@ if ((await Deno.permissions.query(playerdbPerm)).state == "granted") {
       const name = (await profile.json()).data.player.username;
       uuidMap[uuid] = name;
       // deno-lint-ignore no-empty
-    } catch { }
+    } catch {}
   }
   log();
 } else for (const uuid of uuids) uuidMap[uuid] = uuid;
@@ -130,31 +144,31 @@ try {
   Deno.exit(); // https://github.com/microsoft/TypeScript/issues/34955
 }
 
-const artemisWaypoints: ArtemisWaypoint[] = [];
+const waypoints: ArtemisWaypoint[] = [];
 for (const waypoint of legacyData.waypoints) {
   const { name, type, zoomNeeded, x, y, z } = waypoint;
 
   const chest = name.match(/^Loot Chest T([0-4])$/);
 
-  artemisWaypoints.push({
+  waypoints.push({
     name: chest ? `Loot Chest ${chest[1]}` : name,
     color: convertColor(waypoint.color),
     icon: type == "LOOTCHEST_T1"
       ? "CHEST_T1"
       : type == "LOOTCHEST_T2"
-        ? "CHEST_T2"
-        : type == "LOOTCHEST_T3"
-          ? "CHEST_T3"
-          : type == "LOOTCHEST_T4"
-            ? "CHEST_T4"
-            : type == "TURRET"
-              ? "WALL"
-              : type,
+      ? "CHEST_T2"
+      : type == "LOOTCHEST_T3"
+      ? "CHEST_T3"
+      : type == "LOOTCHEST_T4"
+      ? "CHEST_T4"
+      : type == "TURRET"
+      ? "WALL"
+      : type,
     visibility: zoomNeeded > -1
       ? "DEFAULT"
       : zoomNeeded < -1
-        ? "ALWAYS"
-        : "DEFAULT",
+      ? "ALWAYS"
+      : "DEFAULT",
     location: { x, y, z },
   });
 }
@@ -168,16 +182,16 @@ const method = await Select.prompt({
       value: "console",
     },
     {
-      name: "Merge with my Artemis waypoints (Not yet implemented)",
+      name: strikethrough("Merge with my Artemis waypoints"),
       value: "merge",
       disabled: true,
     },
     {
-      name: "Replace my Artemis waypoints (Not yet implemented)",
+      name: "Replace my Artemis waypoints",
       value: "replace",
-      disabled: true,
     },
   ],
+  hint: "Merging isn't implemented yet. Sorry.",
 });
 log();
 
@@ -188,10 +202,85 @@ if (method == "console") {
     ),
   );
   log();
-  log(JSON.stringify(artemisWaypoints));
+  log(JSON.stringify(waypoints));
   log();
   log("(you may need to scroll up)");
   await enterToExit();
-} else {
+}
+
+let artemisPath = await Input.prompt({
+  message: "Where is your Artemis instance?",
+  default: Deno.args[1],
+  hint:
+    "This should be a .minecraft folder containing Wynntils for 1.18.2 or newer",
+});
+artemisPath = join(artemisPath, "wynntils", "config", `${uuid}.conf.json`);
+
+let artemisConfig: ArtemisConfig;
+
+try {
+  artemisConfig = JSON.parse(await Deno.readTextFile(join(artemisPath)));
+} catch (e) {
+  if (e instanceof Deno.errors.NotFound) {
+    log(
+      red("Failed to find the user's Artemis config in the specified folder"),
+    );
+  } else if (e instanceof Deno.errors.PermissionDenied) {
+    log(red("Permission denied to read the user's config"));
+  } else throw e;
+  await enterToExit();
+  Deno.exit(); // https://github.com/microsoft/TypeScript/issues/34955
+}
+log();
+
+if (!artemisConfig["mapFeature.customPois"]) {
+  artemisConfig["mapFeature.customPois"] = [];
+}
+
+if (method == "replace") {
+  const countArtemis = artemisConfig["mapFeature.customPois"].length;
+  if (countArtemis > 0) {
+    log(red(bold(`You are about to delete ${countArtemis} waypoint(s)!`)));
+    log(bold("This cannot be undone!"));
+    await enterToCont();
+  } else {
+    log("No Artemis waypoints found.");
+    log("This is a non-destructive operation. :)");
+  }
+}
+
+if (
+  await Confirm.prompt({
+    message: "Would you like to backup your config?",
+    hint:
+      `This will be saved next to your Artemis config as ${uuid}.conf.json.bak`,
+  })
+) {
+  try {
+    await Deno.copyFile(artemisPath, artemisPath + ".bak");
+    log(green("Backed up config"));
+  } catch (e) {
+    if (
+      e instanceof Deno.errors.NotFound ||
+      e instanceof Deno.errors.PermissionDenied
+    ) {
+      log(red("Failed to backup config"));
+      log("Will make no further attempt to backup the config");
+      await enterToCont();
+    } else throw e;
+  }
+}
+
+if (method == "merge") {
   // Not yet implemented
 }
+
+artemisConfig["mapFeature.customPois"] = waypoints;
+
+log(green("Ready to save updated config"));
+await enterToCont();
+
+Deno.writeTextFile(artemisPath, JSON.stringify(artemisConfig, null, 2));
+
+log(bold(green("Config updated! All done!")));
+await enterToExit();
