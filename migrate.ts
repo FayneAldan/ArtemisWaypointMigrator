@@ -11,8 +11,9 @@ import { colors, tty } from "https://deno.land/x/cliffy@v0.25.6/ansi/mod.ts";
 import { isEqual } from "https://esm.sh/lodash-es@4.17.21";
 
 import { LegacyConfig } from "./src/LegacyConfig.d.ts";
-import { ArtemisConfig, ArtemisWaypoint } from "./src/ArtemisConfig.d.ts";
-import { convertColor } from "./src/convertColor.ts";
+import { ArtemisConfig } from "./src/ArtemisConfig.d.ts";
+import { convertWaypoints } from "./src/convertWaypoints.ts";
+import { lookupUsername } from "./src/mcPlayer.ts";
 
 const { red, yellow, green, bold, cyan } = colors;
 const { log } = console;
@@ -69,8 +70,6 @@ if (uuids.length == 0) {
   await enterToExit();
 }
 
-const uuidMap: Record<string, string> = {};
-
 const playerdbPerm: Deno.NetPermissionDescriptor = {
   name: "net",
   host: "playerdb.co",
@@ -80,39 +79,29 @@ if ((await Deno.permissions.query(playerdbPerm)).state == "prompt") {
   log(bold("Requesting permission"), "to check Minecraft usernames...");
   if ((await Deno.permissions.request(playerdbPerm)).state == "denied") {
     log(yellow("Permission denied."), "Will show UUIDs instead.");
-    log();
-  }
-}
-
-if ((await Deno.permissions.query(playerdbPerm)).state == "granted") {
-  log("Checking Minecraft usernames...");
-  for (const uuid of uuids) {
-    try {
-      const profile: Response = await fetch(
-        `https://playerdb.co/api/player/minecraft/${uuid}`,
-        {
-          headers: {
-            "user-agent": "github.com/FayneAldan/ArtemisWaypointMigrator",
-          },
-        },
-      );
-      const name = (await profile.json()).data.player.username;
-      uuidMap[uuid] = name;
-      // deno-lint-ignore no-empty
-    } catch {}
   }
   log();
-} else for (const uuid of uuids) uuidMap[uuid] = uuid;
+}
 
-function getNameFromUUID(uuid: string): string {
-  return uuidMap[uuid] || `${uuid} (Failed to get username)`;
+async function getNameFromUUID(uuid: string): Promise<string> {
+  // TODO: https://github.com/denoland/deno/issues/17153
+  if ((await Deno.permissions.query(playerdbPerm)).state == "denied") {
+    return uuid;
+  }
+  try {
+    return await lookupUsername(uuid);
+  } catch (e) {
+    return e instanceof Deno.errors.PermissionDenied
+      ? uuid
+      : `${uuid} (Failed to get username)`;
+  }
 }
 
 const uuid: string = await (async () => {
   const options: SelectValueOptions = [];
   for (const uuid of uuids) {
     options.push({
-      name: getNameFromUUID(uuid),
+      name: await getNameFromUUID(uuid),
       value: uuid,
     });
   }
@@ -145,34 +134,7 @@ try {
   Deno.exit(); // https://github.com/microsoft/TypeScript/issues/34955
 }
 
-const waypoints: ArtemisWaypoint[] = [];
-for (const waypoint of legacyData.waypoints) {
-  const { name, type, zoomNeeded, x, y, z } = waypoint;
-
-  const chest = name.match(/^Loot Chest T([0-4])$/);
-
-  waypoints.push({
-    name: chest ? `Loot Chest ${chest[1]}` : name,
-    color: convertColor(waypoint.color),
-    icon: type == "LOOTCHEST_T1"
-      ? "CHEST_T1"
-      : type == "LOOTCHEST_T2"
-      ? "CHEST_T2"
-      : type == "LOOTCHEST_T3"
-      ? "CHEST_T3"
-      : type == "LOOTCHEST_T4"
-      ? "CHEST_T4"
-      : type == "TURRET"
-      ? "WALL"
-      : type,
-    visibility: zoomNeeded > -1
-      ? "DEFAULT"
-      : zoomNeeded < -1
-      ? "ALWAYS"
-      : "DEFAULT",
-    location: { x, y, z },
-  });
-}
+const waypoints = convertWaypoints(legacyData.waypoints);
 
 log(green("Your waypoints have been converted!"));
 const method = await Select.prompt({
