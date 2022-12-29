@@ -158,15 +158,20 @@ for (const waypoint of legacyData.waypoints) {
 
 log(green("Your waypoints have been converted!"));
 const method = await Select.prompt({
-  message: "How would your like your converted waypoints?",
+  message: "What should we do with these waypoints?",
   options: [
     {
-      name: "Printed to console",
+      name: "Print to console",
       value: "console",
     },
     {
-      name: "Automatically saved to my Artemis instance (Not yet implemented)",
-      value: "auto",
+      name: "Merge with my Artemis waypoints (Not yet implemented)",
+      value: "merge",
+      disabled: true,
+    },
+    {
+      name: "Replace my Artemis waypoints (Not yet implemented)",
+      value: "replace",
       disabled: true,
     },
   ],
@@ -184,6 +189,6 @@ if (method == "console") {
   log();
   log("(you may need to scroll up)");
   await enterToExit();
-} else if (method == "auto") {
+} else {
   // Not yet implemented
 }
