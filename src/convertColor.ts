@@ -37,10 +37,11 @@ const colorMap: Record<string, string> = {
 };
 
 export function convertColor(input: string): string {
-  if (colorMap[input.toLowerCase()])
+  if (colorMap[input.toLowerCase()]) {
     return chroma(colorMap[input.toLowerCase()]).hex();
+  }
   if (input.startsWith("rgba(")) {
-    const rgba = <[number, number, number, number]>input
+    const rgba = <[number, number, number, number]> input
       .substring(5, input.length - 1)
       .split(",")
       .map(Number);

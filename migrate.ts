@@ -39,18 +39,18 @@ try {
     .filter((v) => v.isDirectory)
     .map((v) => v.name);
 } catch (e) {
-  if (e instanceof Deno.errors.NotFound)
+  if (e instanceof Deno.errors.NotFound) {
     log(red("Failed to find Wynntils legacy configs in the specified folder"));
-  else if (e instanceof Deno.errors.PermissionDenied)
-    log(red("Permission denied to read from this folder."));
-  else throw e;
+  } else if (e instanceof Deno.errors.PermissionDenied) {
+    log(red("Permission denied to read from this folder"));
+  } else throw e;
   await enterToExit();
 }
 
 log();
 
 if (uuids.length == 0) {
-  log(red("Failed to find any legacy Wynntils configs in this folder."));
+  log(red("Failed to find any legacy Wynntils configs in this folder"));
   await enterToExit();
 }
 
@@ -77,14 +77,14 @@ if ((await Deno.permissions.query(playerdbPerm)).state == "granted") {
         `https://playerdb.co/api/player/minecraft/${uuid}`,
         {
           headers: {
-            "user-agent": "faynealdan.github.io/ArtemisWaypointMigrator/",
+            "user-agent": "github.com/FayneAldan/ArtemisWaypointMigrator",
           },
-        }
+        },
       );
       const name = (await profile.json()).data.player.username;
       uuidMap[uuid] = name;
       // deno-lint-ignore no-empty
-    } catch {}
+    } catch { }
   }
   log();
 } else for (const uuid of uuids) uuidMap[uuid] = uuid;
@@ -95,11 +95,12 @@ function getNameFromUUID(uuid: string): string {
 
 const uuid: string = await (async () => {
   const options: SelectValueOptions = [];
-  for (const uuid of uuids)
+  for (const uuid of uuids) {
     options.push({
       name: getNameFromUUID(uuid),
       value: uuid,
     });
+  }
 
   return await Select.prompt({
     message: "Select your Minecraft account",
@@ -118,7 +119,7 @@ try {
   if (e instanceof SyntaxError) {
     log(red("Failed to read legacy waypoint data"));
     log(
-      `Please report the error below and include wynntils/config/${uuid}/map-waypoints.config`
+      `Please report the error below and include wynntils/config/${uuid}/map-waypoints.config`,
     );
   } else if (e instanceof Deno.errors.NotFound) {
     log(red("Failed to find legacy waypoint data"));
@@ -138,20 +139,22 @@ for (const waypoint of legacyData.waypoints) {
   artemisWaypoints.push({
     name: chest ? `Loot Chest ${chest[1]}` : name,
     color: convertColor(waypoint.color),
-    icon:
-      type == "LOOTCHEST_T1"
-        ? "CHEST_T1"
-        : type == "LOOTCHEST_T2"
+    icon: type == "LOOTCHEST_T1"
+      ? "CHEST_T1"
+      : type == "LOOTCHEST_T2"
         ? "CHEST_T1"
         : type == "LOOTCHEST_T3"
-        ? "CHEST_T1"
-        : type == "LOOTCHEST_T4"
-        ? "CHEST_T1"
-        : type == "TURRET"
-        ? "WALL"
-        : type,
-    visibility:
-      zoomNeeded > -1 ? "DEFAULT" : zoomNeeded < -1 ? "ALWAYS" : "DEFAULT",
+          ? "CHEST_T1"
+          : type == "LOOTCHEST_T4"
+            ? "CHEST_T1"
+            : type == "TURRET"
+              ? "WALL"
+              : type,
+    visibility: zoomNeeded > -1
+      ? "DEFAULT"
+      : zoomNeeded < -1
+        ? "ALWAYS"
+        : "DEFAULT",
     location: { x, y, z },
   });
 }
@@ -181,8 +184,8 @@ log();
 if (method == "console") {
   log(
     bold(
-      `Replace mapFeature.customPois in wynntils/config/${uuid}.conf.json with this:`
-    )
+      `Replace mapFeature.customPois in wynntils/config/${uuid}.conf.json with this:`,
+    ),
   );
   log();
   log(JSON.stringify(artemisWaypoints));

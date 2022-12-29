@@ -1,9 +1,9 @@
 import { convertColor } from "../src/convertColor.ts";
 import { LegacyConfig } from "../src/LegacyConfig.d.ts";
 
-const input = <LegacyConfig>(
+const input = <LegacyConfig> (
   JSON.parse(
-    await Deno.readTextFile(new URL("map-waypoints1.config", import.meta.url))
+    await Deno.readTextFile(new URL("map-waypoints1.config", import.meta.url)),
   )
 );
 const { waypoints, pathWaypoints } = input;
