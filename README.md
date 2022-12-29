@@ -8,7 +8,7 @@ This program is written in Deno. Deno is secure by default and will not give my 
 Deno will prompt you to give the following permissions:
 
 - Read access to your waypoints file in your legacy instance
-- (Optional) Network access to `sessionserver.mojang.com`, which is only used to format your UUID into an easier to read username
+- (Optional) Network access to `playerdb.co`, which is only used to format your UUID into an easier to read username
 - ~~If you choose to save to the Artemis config automatically:~~ (Soon™️)
   - ~~Read and write access to your config file in your Artemis instance~~
 

@@ -77,7 +77,7 @@ if ((await Deno.permissions.query(mojangRequest)).state == "granted") {
   for (const uuid of uuids) {
     try {
       const profile: Response = await fetch(
-        `https://sessionserver.mojang.com/session/minecraft/profile/${uuid}`
+        `https://playerdb.co/api/player/minecraft/${uuid}`
       );
       const name = (await profile.json()).name;
       uuidMap[uuid] = name;
