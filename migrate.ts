@@ -8,12 +8,13 @@ import {
 } from "https://deno.land/x/cliffy@v0.25.6/prompt/mod.ts";
 import { keypress } from "https://deno.land/x/cliffy@v0.25.6/keypress/mod.ts";
 import { colors, tty } from "https://deno.land/x/cliffy@v0.25.6/ansi/mod.ts";
+import { isEqual } from "https://esm.sh/lodash-es@4.17.21";
 
 import { LegacyConfig } from "./src/LegacyConfig.d.ts";
 import { ArtemisConfig, ArtemisWaypoint } from "./src/ArtemisConfig.d.ts";
 import { convertColor } from "./src/convertColor.ts";
 
-const { red, yellow, green, bold, strikethrough } = colors;
+const { red, yellow, green, bold, cyan } = colors;
 const { log } = console;
 
 async function waitForEnter(): Promise<void> {
@@ -182,16 +183,14 @@ const method = await Select.prompt({
       value: "console",
     },
     {
-      name: strikethrough("Merge with my Artemis waypoints"),
+      name: "Merge with my Artemis waypoints",
       value: "merge",
-      disabled: true,
     },
     {
       name: "Replace my Artemis waypoints",
       value: "replace",
     },
   ],
-  hint: "Merging isn't implemented yet. Sorry.",
 });
 log();
 
@@ -272,11 +271,34 @@ if (
 }
 
 if (method == "merge") {
-  // Not yet implemented
+  const stats = {
+    dupes: 0,
+    added: 0,
+    prev: artemisConfig["mapFeature.customPois"].length,
+  };
+
+  for (const waypoint of artemisConfig["mapFeature.customPois"]) {
+    let dupe = false;
+    for (const oldWaypoint of waypoints) {
+      dupe = dupe || isEqual(waypoint, oldWaypoint);
+    }
+
+    if (dupe) stats.dupes++;
+    else {
+      stats.added++;
+      waypoints.push(waypoint);
+    }
+  }
+
+  log();
+  log(cyan(`Merged ${stats.added} waypoint(s) from Artemis`));
+  log(cyan(`Ignored ${stats.dupes} duplicate waypoint(s)`));
+  log(cyan(`Went from ${stats.prev} to ${waypoints.length} total waypoint(s)`));
 }
 
 artemisConfig["mapFeature.customPois"] = waypoints;
 
+log();
 log(green("Ready to save updated config"));
 await enterToCont();
 
