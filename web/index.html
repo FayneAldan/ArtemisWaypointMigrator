@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Artemis Waypoint Migrator</title>
+    <link rel="stylesheet" href="index.css" />
+  </head>
+  <body>
+    <div id="error">
+      <p id="error-text"></p>
+      <p>
+        If you believe this is a mistake,
+        <a href="https://github.com/FayneAldan/ArtemisWaypointMigrator/issues"
+          >please report the issue</a
+        >
+        and include any relevant files. Thanks.
+      </p>
+    </div>
+
+    <div id="username">
+      <h1>Minecraft Username</h1>
+      <form action="#">
+        <label>
+          <p>What is your Minecraft username?</p>
+          <input type="text" id="username-input" />
+        </label>
+        <button type="submit" id="username-next">Next</button>
+        <button type="button" id="username-skip">Skip</button>
+      </form>
+      <p>This information is only used to help you find your config files.</p>
+    </div>
+
+    <div id="account">
+      <h1>Is this you?</h1>
+      <div id="account-block">
+        <img
+          src="https://visage.surgeplay.com/bust/128/X-Steve"
+          id="account-avatar"
+          title="Bust"
+        />
+        <div id="account-username">Steve</div>
+        <div id="account-uuid">00000000-0000-0000-0000-000000000000</div>
+        <p id="account-buttons">
+          <button type="button" id="account-next">Yes</button>
+          <button type="button" id="account-back">No</button>
+        </p>
+      </div>
+    </div>
+
+    <div id="legacy">
+      <h1>Wynntils Legacy Config</h1>
+      <p>
+        Please find your .minecraft folder containing Wynntils legacy (Minecraft
+        1.12.2)
+      </p>
+      <label>
+        <p>
+          Upload
+          <span class="path"
+            >wynntils\<wbr />configs\<wbr /><span id="legacy-uuid">(uuid)</span
+            >\<wbr />map-waypoints<wbr />.config</span
+          >
+          below:
+        </p>
+        <input type="file" id="legacy-file" accept=".config" />
+      </label>
+      <label>
+        <p>Or paste its contents below:</p>
+        <textarea
+          id="legacy-data"
+          autocomplete="off"
+          spellcheck="false"
+          rows="10"
+          placeholder='{
+  "waypoints": [],
+  "pathWaypoints": [],
+  "iconFade": true,
+  "iconFadeScale": 30,
+  "chestTiers": "TIER_3",
+  "compassMarker": true,
+  "waypointSpacing": "MEDIUM"
+}'
+        ></textarea>
+      </label>
+      <p>
+        <button type="button" id="legacy-next">Convert</button>
+        <button type="button" id="legacy-back">Back</button>
+      </p>
+    </div>
+
+    <div id="artemis">
+      <h1>Wynntils Artemis Config</h1>
+      <p class="success">Your waypoints have been converted!</p>
+      <p>
+        Please find your .minecraft folder containing Wynntils Artemis
+        (Minecraft 1.18.2 or newer)
+      </p>
+      <label>
+        <p>
+          Upload
+          <span class="path"
+            >wynntils\<wbr />config\<wbr /><span id="artemis-uuid">(uuid)</span
+            ><wbr />.conf<wbr />.json</span
+          >
+          below:
+        </p>
+        <input type="file" id="artemis-file" accept=".conf.json" />
+      </label>
+      <label>
+        <p>Or paste its contents below:</p>
+        <textarea
+          id="artemis-data"
+          autocomplete="off"
+          spellcheck="false"
+          rows="10"
+          placeholder='{
+  "mapFeature.customPois": []
+}'
+        ></textarea>
+      </label>
+      <p>
+        <button type="button" id="artemis-next">Merge</button>
+        <button type="button" id="artemis-back">Back</button>
+      </p>
+    </div>
+
+    <div id="download">
+      <h1>All done!</h1>
+      <p class="success">
+        Your Wynntils legacy and Wynntils Artemis configs have been merged!
+      </p>
+      <label>
+        <p>
+          You can find your new Artemis config below or click Download further
+          down:
+        </p>
+        <p>
+          Replace
+          <span class="path"
+            >wynntils\<wbr />config\<wbr /><span id="download-uuid">(uuid)</span
+            ><wbr />.conf<wbr />.json</span
+          >
+          with the text below or with the download further down:
+        </p>
+        <textarea id="download-data" rows="10" readonly></textarea>
+      </label>
+      <p>
+        <button type="button" id="download-btn">Download</button>
+        <button type="button" id="download-back">Back</button>
+      </p>
+    </div>
+
+    <script src="./bundle.js"></script>
+  </body>
+</html>
