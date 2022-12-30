@@ -26,7 +26,7 @@ prompt you to give the following permissions:
 # Slightly More Advanced Usage
 
 1. [Download and install Deno.][deno]
-2. `deno run --reload https://faynealdan.github.io/ArtemisWaypointMigrator/cli/migrate.ts`
+2. `deno run --reload https://faynealdan.github.io/ArtemisWaypointMigrator/migrate.ts`
    - `--reload` is used to make the latest version of the script is downloaded
      upon run.
 3. Follow the instructions on screen.

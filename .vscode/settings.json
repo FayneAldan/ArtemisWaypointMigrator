@@ -1,5 +1,6 @@
 {
-  "deno.enablePaths": [
-    "cli"
-  ]
+  "deno.enable": true,
+  "[typescript]": {
+    "editor.defaultFormatter": "denoland.vscode-deno"
+  }
 }
