@@ -31,7 +31,7 @@ jobs:
       - run: npx webpack --mode=production
       - uses: actions/jekyll-build-pages@v1
         with:
-          source: ./
+          source: ./web
           destination: ./_site
       - uses: actions/upload-pages-artifact@v1
 
