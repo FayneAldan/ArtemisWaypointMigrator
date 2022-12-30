@@ -16,7 +16,7 @@ import { convertWaypoints } from "./lib/convertWaypoints.ts";
 import { lookupUsername } from "./lib/mcPlayer.ts";
 import { mergeWaypoints } from "./lib/mergeWaypoints.ts";
 
-const { red, yellow, green, bold, cyan } = colors;
+const { red, yellow, green, cyan, bold, italic } = colors;
 const { log } = console;
 
 async function waitForEnter(): Promise<void> {
@@ -77,7 +77,11 @@ const playerdbPerm: Deno.NetPermissionDescriptor = {
 };
 
 if ((await Deno.permissions.query(playerdbPerm)).state == "prompt") {
-  log(bold("Requesting permission"), "to check Minecraft usernames...");
+  log(
+    bold("Requesting permission"),
+    "to check Minecraft usernames...",
+    italic("(Optional)"),
+  );
   if ((await Deno.permissions.request(playerdbPerm)).state == "denied") {
     log(yellow("Permission denied."), "Will show UUIDs instead.");
   }
