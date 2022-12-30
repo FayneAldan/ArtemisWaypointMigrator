@@ -60,6 +60,8 @@ function setUUIDDisplays() {
   $("#download-uuid").text(uuid);
 }
 
+$("form").on("submit", () => false);
+
 $("#username-next").on("click", async () => {
   const name = <string>$("#username-input").val();
   try {
