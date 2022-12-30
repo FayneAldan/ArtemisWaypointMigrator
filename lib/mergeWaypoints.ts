@@ -14,12 +14,11 @@ function normalize(waypoint: ArtemisWaypoint): string {
 
 export function mergeWaypoints(
   a: ArtemisWaypoint[],
-  b: ArtemisWaypoint[],
+  b: ArtemisWaypoint[]
 ): ArtemisWaypoint[] {
   const arr = [...a, ...b];
-  return arr.filter((element, index) =>
-    arr.findIndex((step) => (
-      normalize(element) == normalize(step)
-    )) == index
+  return arr.filter(
+    (element, index) =>
+      arr.findIndex((step) => normalize(element) == normalize(step)) == index
   );
 }

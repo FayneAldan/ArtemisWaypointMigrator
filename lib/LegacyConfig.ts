@@ -38,7 +38,10 @@ export const LegacyPathWaypoint = z.object({
   isCircular: z.boolean(),
   isEnabled: z.boolean(),
   color: z.string(),
-  points: z.number().array().refine((v: number[]) => v.length % 3 == 0),
+  points: z
+    .number()
+    .array()
+    .refine((v: number[]) => v.length % 3 == 0),
 });
 export type LegacyPathWaypoint = z.infer<typeof LegacyPathWaypoint>;
 

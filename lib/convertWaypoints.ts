@@ -9,22 +9,20 @@ export function convertWaypoint(waypoint: LegacyWaypoint): ArtemisWaypoint {
   return ArtemisWaypoint.parse({
     name: chest ? `Loot Chest ${chest[1]}` : name,
     color: convertColor(waypoint.color),
-    icon: type == "LOOTCHEST_T1"
-      ? "CHEST_T1"
-      : type == "LOOTCHEST_T2"
+    icon:
+      type == "LOOTCHEST_T1"
+        ? "CHEST_T1"
+        : type == "LOOTCHEST_T2"
         ? "CHEST_T2"
         : type == "LOOTCHEST_T3"
-          ? "CHEST_T3"
-          : type == "LOOTCHEST_T4"
-            ? "CHEST_T4"
-            : type == "TURRET"
-              ? "WALL"
-              : type,
-    visibility: zoomNeeded > -1
-      ? "DEFAULT"
-      : zoomNeeded < -1
-        ? "ALWAYS"
-        : "DEFAULT",
+        ? "CHEST_T3"
+        : type == "LOOTCHEST_T4"
+        ? "CHEST_T4"
+        : type == "TURRET"
+        ? "WALL"
+        : type,
+    visibility:
+      zoomNeeded > -1 ? "DEFAULT" : zoomNeeded < -1 ? "ALWAYS" : "DEFAULT",
     location: { x, y, z },
   });
 }

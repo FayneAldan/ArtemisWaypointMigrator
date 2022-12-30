@@ -6,7 +6,10 @@ const PlayerData = z.object({
   }),
   username: z.string(),
   id: z.string().uuid(),
-  raw_id: z.string().length(32).regex(/^[0-9a-z]{32}$/),
+  raw_id: z
+    .string()
+    .length(32)
+    .regex(/^[0-9a-z]{32}$/),
   avatar: z.string().url(),
   name_history: z.string().array(),
 });
@@ -39,16 +42,17 @@ type LookupResult = z.infer<typeof LookupResult>;
 const cache: Record<string, LookupResult> = {};
 
 export async function lookupPlayer(id: string): Promise<PlayerData> {
-  const lookup = cache[id] || LookupResult.parse(
-    await (await fetch(
-      `https://playerdb.co/api/player/minecraft/${id}`,
-      {
-        headers: {
-          "user-agent": "github.com/FayneAldan/ArtemisWaypointMigrator",
-        },
-      },
-    )).json(),
-  );
+  const lookup =
+    cache[id] ||
+    LookupResult.parse(
+      await (
+        await fetch(`https://playerdb.co/api/player/minecraft/${id}`, {
+          headers: {
+            "user-agent": "github.com/FayneAldan/ArtemisWaypointMigrator",
+          },
+        })
+      ).json()
+    );
   cache[id] = lookup;
   if (!lookup.success) {
     throw new Error(lookup.message);
