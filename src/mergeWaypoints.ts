@@ -1,4 +1,4 @@
-import { ArtemisWaypoint } from "./ArtemisConfig.d.ts";
+import { ArtemisWaypoint } from "./ArtemisConfig.ts";
 
 function normalize(waypoint: ArtemisWaypoint): string {
   return JSON.stringify([

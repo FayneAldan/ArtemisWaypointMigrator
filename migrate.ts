@@ -9,11 +9,12 @@ import {
 import { keypress } from "https://deno.land/x/cliffy@v0.25.6/keypress/mod.ts";
 import { colors, tty } from "https://deno.land/x/cliffy@v0.25.6/ansi/mod.ts";
 
-import { LegacyConfig } from "./src/LegacyConfig.d.ts";
-import { ArtemisConfig } from "./src/ArtemisConfig.d.ts";
+import { LegacyConfig } from "./src/LegacyConfig.ts";
+import { ArtemisConfig, ArtemisWaypoints } from "./src/ArtemisConfig.ts";
 import { convertWaypoints } from "./src/convertWaypoints.ts";
 import { lookupUsername } from "./src/mcPlayer.ts";
 import { mergeWaypoints } from "./src/mergeWaypoints.ts";
+import { z } from "https://deno.land/x/zod@v3.20.2/mod.ts";
 
 const { red, yellow, green, bold, cyan } = colors;
 const { log } = console;
@@ -115,15 +116,16 @@ log();
 
 legacyPath = join(legacyPath, uuid, "map-waypoints.config");
 
-let legacyData: LegacyConfig;
+let waypoints: ArtemisWaypoints = [];
 try {
   const fileData = await Deno.readTextFile(legacyPath);
-  legacyData = JSON.parse(fileData);
+  const legacyData = LegacyConfig.parse(JSON.parse(fileData));
+  waypoints = convertWaypoints(legacyData.waypoints);
 } catch (e) {
-  if (e instanceof SyntaxError) {
+  if (e instanceof SyntaxError || e instanceof z.ZodError) {
     log(red("Failed to read legacy waypoint data"));
     log(
-      `Please report the error below and include wynntils/config/${uuid}/map-waypoints.config`,
+      `Please report the error below and include wynntils/configs/${uuid}/map-waypoints.config`,
     );
   } else if (e instanceof Deno.errors.NotFound) {
     log(red("Failed to find legacy waypoint data"));
@@ -134,8 +136,6 @@ try {
   Deno.exit(); // https://github.com/microsoft/TypeScript/issues/34955
 }
 
-let waypoints = convertWaypoints(legacyData.waypoints);
-
 log(green("Your waypoints have been converted!"));
 const method = await Select.prompt({
   message: "What should we do with these waypoints?",
@@ -145,7 +145,7 @@ const method = await Select.prompt({
       value: "console",
     },
     {
-      name: "Merge with my Artemis waypoints",
+      name: "Merge with my existing Artemis waypoints",
       value: "merge",
     },
     {
@@ -180,15 +180,21 @@ artemisPath = join(artemisPath, "wynntils", "config", `${uuid}.conf.json`);
 let artemisConfig: ArtemisConfig;
 
 try {
-  artemisConfig = JSON.parse(await Deno.readTextFile(join(artemisPath)));
+  const artemisData = await Deno.readTextFile(artemisPath);
+  artemisConfig = ArtemisConfig.parse(JSON.parse(artemisData));
 } catch (e) {
-  if (e instanceof Deno.errors.NotFound) {
+  if (e instanceof SyntaxError || e instanceof z.ZodError) {
+    log(red("Failed to read Artemis waypoint data"));
     log(
-      red("Failed to find the user's Artemis config in the specified folder"),
+      `Please report the error below and include wynntils/config/${uuid}.conf.json`,
     );
+  } else if (e instanceof Deno.errors.NotFound) {
+    log(red("Failed to find Artemis config in the specified folder"));
   } else if (e instanceof Deno.errors.PermissionDenied) {
     log(red("Permission denied to read the user's config"));
   } else throw e;
+
+  log(e);
   await enterToExit();
   Deno.exit(); // https://github.com/microsoft/TypeScript/issues/34955
 }
