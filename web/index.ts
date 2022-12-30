@@ -160,11 +160,11 @@ $("#artemis-back").on("click", () => {
 $("#download-btn").on("click", () => {
   const contents = <string>$("#download-data").val();
   const myFile = new Blob([contents], { type: "application/json" });
+  const filename = $("#artemis-file").prop("files")[0].name;
   const href = URL.createObjectURL(myFile);
-  console.log(href);
 
   const a = document.createElement("a");
-  a.setAttribute("download", uuid + ".conf.json");
+  a.setAttribute("download", filename);
   a.href = href;
   a.setAttribute("target", "_blank");
   a.click();
