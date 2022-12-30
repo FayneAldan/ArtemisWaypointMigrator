@@ -8,13 +8,13 @@ import {
 } from "https://deno.land/x/cliffy@v0.25.6/prompt/mod.ts";
 import { keypress } from "https://deno.land/x/cliffy@v0.25.6/keypress/mod.ts";
 import { colors, tty } from "https://deno.land/x/cliffy@v0.25.6/ansi/mod.ts";
-
-import { LegacyConfig } from "./src/LegacyConfig.ts";
-import { ArtemisConfig, ArtemisWaypoints } from "./src/ArtemisConfig.ts";
-import { convertWaypoints } from "./src/convertWaypoints.ts";
-import { lookupUsername } from "./src/mcPlayer.ts";
-import { mergeWaypoints } from "./src/mergeWaypoints.ts";
 import { z } from "https://deno.land/x/zod@v3.20.2/mod.ts";
+
+import { LegacyConfig } from "../lib/LegacyConfig.ts";
+import { ArtemisConfig, ArtemisWaypoints } from "../lib/ArtemisConfig.ts";
+import { convertWaypoints } from "../lib/convertWaypoints.ts";
+import { lookupUsername } from "../lib/mcPlayer.ts";
+import { mergeWaypoints } from "../lib/mergeWaypoints.ts";
 
 const { red, yellow, green, bold, cyan } = colors;
 const { log } = console;

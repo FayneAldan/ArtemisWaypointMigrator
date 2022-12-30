@@ -1,8 +1,7 @@
 import { Input } from "https://deno.land/x/cliffy@v0.25.6/prompt/mod.ts";
-
 import { colors } from "https://deno.land/x/cliffy@v0.25.6/ansi/mod.ts";
 
-import { convertColor } from "./src/convertColor.ts";
+import { convertColor } from "../lib/convertColor.ts";
 
 // REPL
 while (true) {
