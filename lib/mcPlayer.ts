@@ -39,8 +39,8 @@ type LookupResult = z.infer<typeof LookupResult>;
 const cache: Record<string, LookupResult> = {};
 
 export async function lookupPlayer(id: string): Promise<PlayerData> {
-  const lookup = LookupResult.parse(
-    cache[id] || await (await fetch(
+  const lookup = cache[id] || LookupResult.parse(
+    await (await fetch(
       `https://playerdb.co/api/player/minecraft/${id}`,
       {
         headers: {
